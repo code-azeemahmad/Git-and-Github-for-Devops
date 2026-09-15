@@ -9,3 +9,5 @@ fourth bug fixed.
 fifth bug fixed.
 
 another fix message for feature page
+
+another fix message for development page
