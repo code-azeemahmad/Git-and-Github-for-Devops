@@ -1,1 +1,3 @@
 this is my file2 for git and github for devops
+
+2027 footer note added 
