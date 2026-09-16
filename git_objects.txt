@@ -1,0 +1,8 @@
+# Git Objects
+
+1. Commit Object    Points to a single tree
+2. Tree Object      Represents a directory
+3. Blob Object      Stores the raw content of a file
+4. Tag
+
+porcelain vs plumbing commands in git
