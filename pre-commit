@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# ==================================================
+# Git pre-commit hook: Secret detection + Flake8
+# ==================================================
+
+set -u
+
+echo "Running pre-commit security checks..."
+
+# Check 1: Reject staged .env files
+# Matches .env, .env.local, .env.production, etc.
+
+env_files=$(
+    git diff --cached --name-only --diff-filter=ACMR |
+    grep -E '(^|/)\.env($|\.)' || true
+)
+
+if [ -n "$env_files" ]; then
+    echo ""
+    echo "ERROR: Environment files must not be committed:"
+    printf '%s\n' "$env_files"
+    echo "Move secrets to a secure secret manager or local environment file."
+    echo "Commit rejected."
+    exit 1
+fi
+
+# Check 2: Scan added lines for potential secrets
+
+staged_diff=$(
+    git diff --cached --no-ext-diff --unified=0 --diff-filter=ACMR
+)
+
+added_lines=$(
+    printf '%s\n' "$staged_diff" |
+    grep '^+' |
+    grep -v '^+++' || true
+)
+
+if printf '%s\n' "$added_lines" |
+    grep -Eiq \
+    '(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,}|sk-[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|((api[_-]?key|secret([_-]?key)?|client[_-]?secret|access[_-]?token|auth[_-]?token|password|passwd|credentials|private[_-]?key|database[_-]?url|connection[_-]?string)[A-Za-z0-9_-]*)[[:space:]]*[:=][[:space:]]*['\''"]?[^[:space:]'\''"]{8,})'
+then
+    echo ""
+    echo "ERROR: Potential password, API key, token, or credential detected."
+    echo "Review your staged changes and remove any real secrets."
+    echo "Commit rejected."
+    exit 1
+fi
+
+echo "Secret checks passed."
+
+# Check 3: Run Flake8 on staged Python files
+
+echo "Checking staged Python files with Flake8..."
+
+python_files=$(
+    git diff --cached --name-only --diff-filter=ACM |
+    grep -E '\.py$' || true
+)
+
+if [ -n "$python_files" ]; then
+    if ! command -v flake8 >/dev/null 2>&1; then
+        echo "ERROR: Flake8 is not installed."
+        exit 1
+    fi
+
+    # Handles ordinary filenames; avoid spaces in filenames
+    # for this simple educational implementation.
+    printf '%s\n' "$python_files" |
+    while IFS= read -r file; do
+        git diff --cached --quiet -- "$file" && continue
+        flake8 "$file" || exit 1
+    done || exit 1
+fi
+
+echo "All pre-commit checks passed."
+exit 0
