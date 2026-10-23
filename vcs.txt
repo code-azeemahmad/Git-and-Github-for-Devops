@@ -1,0 +1,21 @@
+                 GIT (VCS)
+                    |
+                    v
++-------------------+-------------------+
+|                   |                   |
+|  1. UNTRACKED     |  2. STAGED        |  3. TRACKED
+|                   |                   |
+|  File system      |  Staging area     |  Git repository
+|                   |                   |  (Local repo)
+|  test.py          |  test.py          |  test.py
+|                   |                   |
+|  RED              |  GREEN            |  COMMITTED
+|                   |                   |
+|  git add filename |  git commit -m    |  Git stores the
+|                   |  "message"        |  saved snapshot
+|                   |                   |
++-------------------+-------------------+
+         |                   |
+         | git add           | git commit -m "..."
+         +------------------>| 
+                             +-------------------->
