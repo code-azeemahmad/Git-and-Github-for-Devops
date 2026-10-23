@@ -8,8 +8,7 @@ def hello():
     """
     this is hello
     """
-
     print("hello github actions")
-
-
+    
 hello()
+
